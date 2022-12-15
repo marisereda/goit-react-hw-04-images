@@ -79,17 +79,17 @@ export class App extends Component {
 
   // --------------------------------
   handleSearch = search => {
-    this.setState(prevState => {
-      if (prevState.search !== search) {
-        this.setState({
-          images: [],
-          totalImages: 0,
-          page: 1,
-          status: status.idle,
-          isScrollUp: false,
-          search,
-        });
-      } else return;
+    if (this.state.search === search) {
+      return;
+    }
+
+    this.setState({
+      images: [],
+      totalImages: 0,
+      page: 1,
+      status: status.idle,
+      isScrollUp: false,
+      search,
     });
   };
 
