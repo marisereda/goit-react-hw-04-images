@@ -8,8 +8,8 @@ import { theme } from 'constants/theme';
 
 export const SearchBar = ({ onSearchSubmit }) => {
   const [search, setSearch] = useState('');
-  // --------------------------------
 
+  // --------------------------------
   const handleSubmit = e => {
     e.preventDefault();
     onSearchSubmit(search);
@@ -19,7 +19,6 @@ export const SearchBar = ({ onSearchSubmit }) => {
   const handleInputChange = e => {
     setSearch(e.target.value);
   };
-  // --------------------------------
 
   return (
     <Box

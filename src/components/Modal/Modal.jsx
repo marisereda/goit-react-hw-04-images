@@ -21,8 +21,8 @@ export const Modal = ({ onClose, largeImageURL }) => {
         onClose();
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
@@ -55,59 +55,3 @@ Modal.propTypes = {
   onClose: PropTypes.func.isRequired,
   largeImageURL: PropTypes.string.isRequired,
 };
-
-//================================================================
-// export class Modal extends Component {
-//   static propTypes = {
-//     onClose: PropTypes.func.isRequired,
-//     largeImageURL: PropTypes.string.isRequired,
-//   };
-
-//   // --------------------------------
-//   componentDidMount() {
-//     window.addEventListener('keydown', this.handleKeyDown);
-//   }
-
-//   // --------------------------------
-//   componentWillUnmount() {
-//     window.removeEventListener('keydown', this.handleKeyDown);
-//   }
-
-//   // --------------------------------
-//   handleKeyDown = e => {
-//     if (e.code === 'Escape') {
-//       onClose();
-//     }
-//   };
-
-//   // --------------------------------
-//   handleClickBackdrop = e => {
-//     if (e.target === e.currentTarget) {
-//       onClose();
-//     }
-//   };
-
-//   // --------------------------------
-//   render() {
-//     return createPortal(
-//       <Box
-//         position="fixed"
-//         top="0"
-//         bottom="0"
-//         left="0"
-//         right="0"
-//         display="flex"
-//         justifyContent="center"
-//         alignItems="center"
-//         backgroundColor="rgba(0, 0, 0, 0.8)"
-//         zIndex="modal"
-//         onClick={this.handleClickBackdrop}
-//       >
-//         <Box position="relative" width="50%" paddingTop="35%">
-//           <ModalImage src={largeImageURL} alt="" />
-//         </Box>
-//       </Box>,
-//       modalRoot
-//     );
-//   }
-// }
