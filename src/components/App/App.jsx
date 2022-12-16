@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { throttle } from 'lodash';
@@ -12,122 +12,91 @@ import { Loader } from 'components/Loader';
 import { ScrollUp } from 'components/ScrollUp';
 import { getImages, scrollTo } from 'utils';
 
-const status = {
+const STATUS = {
   idle: 0,
   pending: 1,
   resolved: 2,
   rejected: 3,
 };
 
-export class App extends Component {
-  state = {
-    images: [],
-    search: '',
-    totalImages: 0,
-    page: 1,
-    status: status.idle,
-    isScrollUp: false,
-  };
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [search, setSearch] = useState('');
+  const [totalImages, setTotalImages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState(STATUS.idle);
+  const [isScrollUp, setIsScrollUp] = useState(false);
+
+  let isFirstLoading = useRef(true);
 
   // --------------------------------
-  async componentDidMount() {
-    window.addEventListener('scroll', throttle(this.handleScroll), 300);
-  }
+  useEffect(() => {
+    const handleScroll = throttle(
+      () => setIsScrollUp(window.scrollY > window.innerHeight),
+      300
+    );
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   // --------------------------------
-  async componentDidUpdate(_, prevState) {
-    const { search, page } = this.state;
-
-    if (prevState.search !== search || prevState.page !== page) {
-      this.setState({ status: status.pending });
-      try {
-        const response = await getImages(search, page);
-        this.setState(prevState => ({
-          images: [...prevState.images, ...response.hits],
-          status: status.resolved,
-          totalImages: response.totalHits,
-        }));
-      } catch (error) {
-        toast(error.message);
-        this.setState({ status: status.rejected });
-        return;
-      }
-    }
-  }
-
-  // --------------------------------
-  componentWillUnmount() {
-    window.removeEventListener('scroll', this.handleScroll);
-  }
-
-  // --------------------------------
-  handleScroll = () => {
-    if (window.scrollY > window.innerHeight) {
-      this.setState(prevState => {
-        if (!prevState.isScrollUp) {
-          return { isScrollUp: true };
-        }
-      });
-    } else {
-      this.setState(prevState => {
-        if (prevState.isScrollUp) {
-          return { isScrollUp: false };
-        }
-      });
-    }
-  };
-
-  // --------------------------------
-  handleSearch = search => {
-    if (this.state.search === search) {
+  useEffect(() => {
+    if (isFirstLoading.current) {
+      isFirstLoading.current = false;
       return;
     }
 
-    this.setState({
-      images: [],
-      totalImages: 0,
-      page: 1,
-      status: status.idle,
-      isScrollUp: false,
-      search,
-    });
-  };
+    async function manageSearch() {
+      if (!search) {
+        return;
+      }
+      setStatus(STATUS.pending);
+      try {
+        const response = await getImages(search, page);
+        setImages(prevImages => [...prevImages, ...response.hits]);
+        setStatus(STATUS.resolved);
+        setTotalImages(response.totalHits);
+      } catch (error) {
+        toast(error.message);
+        setStatus(STATUS.rejected);
+      }
+    }
+
+    manageSearch();
+  }, [search, page]);
 
   // --------------------------------
-  handleClickLoadMore = page => {
-    this.setState({ page });
+  const handleSearch = newSearch => {
+    if (!newSearch || search === newSearch) {
+      return;
+    }
+
+    setImages([]);
+    setTotalImages(0);
+    setPage(1);
+    setStatus(STATUS.idle);
+    setIsScrollUp(false);
+    setSearch(newSearch);
   };
 
-  // --------------------------------
-  handleClickScrollUp = () => {
-    scrollTo(0);
-  };
+  return (
+    <Box paddingBottom={5}>
+      <SearchBar onSearchSubmit={handleSearch} />
+      <Box padding={6} as="main">
+        <ImageGallery images={images} />
 
-  // --------------------------------
-  render() {
-    return (
-      <Box paddingBottom={5}>
-        <SearchBar onSearchSubmit={this.handleSearch} />
-        <Box padding={6} as="main">
-          <ImageGallery images={this.state.images} />
+        {status === STATUS.pending && <Loader />}
 
-          {this.state.status === status.pending && <Loader />}
+        {status === STATUS.resolved && images.length < totalImages && (
+          <Button onClick={setPage} page={page} />
+        )}
 
-          {this.state.status === status.resolved &&
-            this.state.images.length < this.state.totalImages && (
-              <Button
-                onClick={this.handleClickLoadMore}
-                page={this.state.page}
-              />
-            )}
-
-          {this.state.isScrollUp && (
-            <ScrollUp onClick={this.handleClickScrollUp} />
-          )}
-        </Box>
-        <ToastContainer />
-        <GlobalStyle />
+        {isScrollUp && <ScrollUp onClick={() => scrollTo(0)} />}
       </Box>
-    );
-  }
-}
+      <ToastContainer />
+      <GlobalStyle />
+    </Box>
+  );
+};
